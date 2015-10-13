@@ -1,4 +1,5 @@
 module BuildExecutable
+export build_executable
 @windows_only using WinRPM
 # Builds an executable that doesn't require any julia source code.
 # The user needs to provide a julia script that contains a function main(),
