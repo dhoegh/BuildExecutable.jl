@@ -1,5 +1,4 @@
 using BuildExecutable
 using Base.Test
 
-# write your own tests here
-@test 1 == 1
+build_executable("test", joinpath(dirname(@__FILE__), "test.jl"), targetdir=joinpath(dirname(@__FILE__),"test_dir"), cpu_target="native"; force=false)
