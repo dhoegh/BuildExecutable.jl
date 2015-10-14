@@ -37,21 +37,29 @@ end
 type SysFile
     buildpath
     buildfile
-    buildfile0
+	inference
+    inference0
 end
 
 function SysFile(exename)
     buildpath = abspath(dirname(Libdl.dlpath("libjulia")))
     buildfile = joinpath(buildpath, "lib"*exename)
-    buildfile0 = joinpath(buildpath, "sys0")
-
-    SysFile(buildpath, buildfile, buildfile0)
+    inference = joinpath(buildpath, "inference")
+    inference0 = joinpath(buildpath, "inference0")
+    SysFile(buildpath, buildfile, inference, inference0)
 end
 
 function build_executable(exename, script_file, targetdir=nothing, cpu_target="native"; force=false)
     julia = abspath(joinpath(JULIA_HOME, "julia"))
-    build_sysimg = abspath(joinpath(dirname(@__FILE__), "build_sysimg.jl"))
-
+    build_sysimg = abspath(JULIA_HOME, Base.DATAROOTDIR, "julia", "build_sysimg.jl")
+	if !isfile(build_sysimg)
+		build_sysimg = abspath(JULIA_HOME, "..", "..", "contrib", "build_sysimg.jl")
+		if !isfile(build_sysimg)
+			println("ERROR: build_sysimg.jl not found.")
+			return 1
+		end
+	end
+    
     if targetdir != nothing
         patchelf = find_patchelf()
         if patchelf == nothing && !(OS_NAME == :Windows)
@@ -124,8 +132,8 @@ function build_executable(exename, script_file, targetdir=nothing, cpu_target="n
         println()
     end
 
-    println("running: rm -rf $(tmpdir) $(sys.buildfile).o $(sys.buildfile0).o $(sys.buildfile0).ji")
-    map(f-> rm(f, recursive=true), [tmpdir, sys.buildfile*".o", sys.buildfile0*".o", sys.buildfile0*".ji"])
+    println("running: rm -rf $(tmpdir) $(sys.buildfile).o $(sys.inference).o $(sys.inference).ji $(sys.inference0).o $(sys.inference0).ji")
+    map(f-> rm(f, recursive=true), [tmpdir, sys.buildfile*".o", sys.inference*".o", sys.inference*".ji", sys.inference0*".o", sys.inference0*".ji"])
     println()
 
     if targetdir != nothing
