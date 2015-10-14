@@ -6,7 +6,7 @@ targetdir = joinpath(dirname(@__FILE__),"test_dir")
 mkdir(targetdir)
 exename="test"
 try
-    build_executable(mkdir, script, targetdir, "native"; force=false)
+    build_executable(exename, script, targetdir, "native"; force=false)
     run(`$(joinpath(targetdir,exename*".exe"))`)
 finally
     rm(targetdir, recursive=true)
