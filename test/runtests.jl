@@ -1,4 +1,13 @@
 using BuildExecutable
 using Base.Test
-
-build_executable("test", joinpath(dirname(@__FILE__), "test.jl"), joinpath(dirname(@__FILE__),"test_dir"), "native"; force=false)
+script = joinpath(dirname(@__FILE__), "test.jl")
+@test isfile(script)
+targetdir = joinpath(dirname(@__FILE__),"test_dir")
+mkdir(targetdir)
+exename="test"
+try
+    build_executable(mkdir, script, targetdir, "native"; force=false)
+    run(`$(joinpath(targetdir,exename*".exe"))`)
+finally
+    rm(targetdir, recursive=true)
+end
