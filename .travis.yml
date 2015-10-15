@@ -1,20 +1,17 @@
-language: cpp
-compiler:
-  - clang
+# Documentation: http://docs.travis-ci.com/user/languages/julia/
+language: julia
+os:
+  - linux
+  - osx
+julia:
+  - 0.4
+  - nightly
 notifications:
   email: false
-env:
-  matrix:
-    - JULIAVERSION="juliareleases"
-    - JULIAVERSION="julianightlies"
+# uncomment the following lines to override the default test script
 before_install:
   - sudo add-apt-repository ppa:staticfloat/julia-deps -y
-  - sudo add-apt-repository ppa:staticfloat/${JULIAVERSION} -y
-  - sudo apt-get update -qq -y
-  - sudo apt-get install libpcre3-dev julia -y
-  - sudo apt-get install patchelf
-  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
+  - if [ `uname` = "Linux" ]; then sudo apt-get install patchelf; fi
 script:
-  - julia -e 'Pkg.init(); Pkg.clone(pwd()); Pkg.test("BuildExecutable",coverage=true)'
-#after_success:
-#  - julia -e 'cd(Pkg.dir("BuildExecutable")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
+  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
+  - julia -e 'Pkg.clone(pwd()); Pkg.build("BuildExecutable"); Pkg.test("BuildExecutable"; coverage=true)'
