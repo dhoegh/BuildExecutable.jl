@@ -10,8 +10,11 @@ notifications:
   email: false
 # uncomment the following lines to override the default test script
 before_install:
-  - sudo add-apt-repository ppa:staticfloat/julia-deps -y
-  - if [ `uname` = "Linux" ]; then sudo apt-get install patchelf; fi
+  - if [ `uname` = "Linux" ]; then
+      sudo add-apt-repository ppa:staticfloat/julia-deps -y;
+      sudo apt-get update -qq -y;
+      sudo apt-get install patchelf;
+    fi
 script:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
   - julia -e 'Pkg.clone(pwd()); Pkg.build("BuildExecutable"); Pkg.test("BuildExecutable"; coverage=true)'
