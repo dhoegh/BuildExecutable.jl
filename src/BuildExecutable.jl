@@ -51,7 +51,7 @@ end
 
 function build_executable(exename, script_file, targetdir=nothing, cpu_target="native"; force=false)
     julia = abspath(joinpath(JULIA_HOME, "julia"))
-    build_sysimg = abspath(JULIA_HOME, Base.DATAROOTDIR, "julia", "build_sysimg.jl")
+    build_sysimg = abspath(dirname(@__FILE__), "build_sysimg.jl")
 	if !isfile(build_sysimg)
 		build_sysimg = abspath(JULIA_HOME, "..", "..", "contrib", "build_sysimg.jl")
 		if !isfile(build_sysimg)
