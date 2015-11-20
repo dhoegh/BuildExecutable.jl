@@ -51,7 +51,7 @@ end
 
 function build_executable(exename, script_file, targetdir=nothing, cpu_target="native"; force=false)
     julia = abspath(joinpath(JULIA_HOME, "julia"))
-    build_sysimg = abspath(JULIA_HOME, Base.DATAROOTDIR, "julia", "build_sysimg.jl")
+    build_sysimg = abspath(dirname(@__FILE__), "build_sysimg.jl")
 	if !isfile(build_sysimg)
 		build_sysimg = abspath(JULIA_HOME, "..", "..", "contrib", "build_sysimg.jl")
 		if !isfile(build_sysimg)
@@ -59,7 +59,7 @@ function build_executable(exename, script_file, targetdir=nothing, cpu_target="n
 			return 1
 		end
 	end
-    
+
     if targetdir != nothing
         patchelf = find_patchelf()
         if patchelf == nothing && !(OS_NAME == :Windows)
@@ -126,8 +126,8 @@ function build_executable(exename, script_file, targetdir=nothing, cpu_target="n
     end
 
     for exe in [exe_release, exe_debug]
-        println("running: $gcc -g -Wl,--no-as-needed $win_arg $(join(incs, " ")) $(cfile) -o $(exe.buildfile) -Wl,-rpath,$(sys.buildpath) -L$(sys.buildpath) $(exe.libjulia) -l$(exename)")
-        cmd = setenv(`$gcc -g -Wl,--no-as-needed $win_arg $(incs) $(cfile) -o $(exe.buildfile) -Wl,-rpath,$(sys.buildpath) -L$(sys.buildpath) $(exe.libjulia) -l$(exename)`, ENV2)
+        println("running: $gcc -g $win_arg $(join(incs, " ")) $(cfile) -o $(exe.buildfile) -Wl,-rpath,$(sys.buildpath) -L$(sys.buildpath) $(exe.libjulia) -l$(exename)")
+        cmd = setenv(`$gcc -g $win_arg $(incs) $(cfile) -o $(exe.buildfile) -Wl,-rpath,$(sys.buildpath) -L$(sys.buildpath) $(exe.libjulia) -l$(exename)`, ENV2)
         run(cmd)
         println()
     end
@@ -148,18 +148,33 @@ function build_executable(exename, script_file, targetdir=nothing, cpu_target="n
         for shlib in shlibs
             cp(joinpath(sys.buildpath, shlib), joinpath(targetdir, shlib))
         end
-
         @unix_only begin
             # Fix rpath in executable and shared libraries
+            # old implementation for fixing rpath in shared libraries
+            #=
             shlibs = filter(Regex(tmp),readdir(targetdir))
             push!(shlibs, exe_release.filename)
             push!(shlibs, exe_debug.filename)
-            println(shlibs)
             for shlib in shlibs
                 rpath = readall(`$(patchelf) --print-rpath $(joinpath(targetdir, shlib))`)[1:end-1]
+                # For debug purpose
+                #println("shlib=$shlib\nrpath=$rpath")
                 if Base.samefile(rpath, sys.buildpath)
                     run(`$(patchelf) --set-rpath $(targetdir) $(joinpath(targetdir, shlib))`)
                 end
+            end=#
+            # New implementation
+            for shlib in [exe_release.filename, exe_debug.filename]
+                @linux_only begin
+                    run(`$(patchelf) --set-rpath $(targetdir) $(joinpath(targetdir, shlib))`)
+                end
+                @osx_only begin
+                    # For debug purpose
+                    #println(readall(`otool -L $(joinpath(targetdir, shlib))`)[1:end-1])
+                    #println("sys.buildfile=",sys.buildfile)
+                    run(`$(patchelf) -change $(sys.buildfile).$(Libdl.dlext) @executable_path/$(basename(sys.buildfile)).$(Libdl.dlext) $(joinpath(targetdir, shlib))`)
+                    #println(readall(`otool -L $(joinpath(targetdir, shlib))`)[1:end-1])
+               end
             end
         end
     end
@@ -171,13 +186,14 @@ function build_executable(exename, script_file, targetdir=nothing, cpu_target="n
 end
 
 function find_patchelf()
-    for patchelf in [joinpath(JULIA_HOME, "patchelf"), "patchelf"]
+    @linux_only for patchelf in [joinpath(JULIA_HOME, "patchelf"), "patchelf"]
         try
             if success(`$(patchelf) --version`)
                 return patchelf
             end
         end
     end
+    @osx_only "install_name_tool"
 end
 
 function get_includes()
