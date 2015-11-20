@@ -139,14 +139,14 @@ function build_executable(exename, script_file, targetdir=nothing, cpu_target="n
     if targetdir != nothing
         # Move created files to target directory
         for file in [exe_release.buildfile, exe_debug.buildfile, sys.buildfile*".$(Libdl.dlext)", sys.buildfile*".ji"]
-            mv(file,joinpath(targetdir, basename(file)))
+            mv(file,joinpath(targetdir, basename(file)),  remove_destination=force)
         end
 
         # Copy needed shared libraries to the target directory
         tmp = ".*\.$(Libdl.dlext).*"
         shlibs = filter(Regex(tmp),readdir(sys.buildpath))
         for shlib in shlibs
-            cp(joinpath(sys.buildpath, shlib), joinpath(targetdir, shlib))
+            cp(joinpath(sys.buildpath, shlib), joinpath(targetdir, shlib),  remove_destination=force)
         end
         @unix_only begin
             # Fix rpath in executable and shared libraries
