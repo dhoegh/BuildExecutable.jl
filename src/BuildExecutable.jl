@@ -166,7 +166,7 @@ function build_executable(exename, script_file, targetdir=nothing, cpu_target="n
             # New implementation
             for shlib in [exe_release.filename, exe_debug.filename]
                 @linux_only begin
-                    run(`$(patchelf) --set-rpath $(targetdir) $(joinpath(targetdir, shlib))`)
+                    run(`$(patchelf) --set-rpath \$ORIGIN $(joinpath(targetdir, shlib))`)
                 end
                 @osx_only begin
                     # For debug purpose
