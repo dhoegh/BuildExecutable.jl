@@ -225,14 +225,28 @@ function emit_cmain(cfile, exename, relocation)
         #include <julia.h>
         #include <stdlib.h>
         #include <stdio.h>
+        #include <assert.h>
+        #include <string.h>
 
         int main(int argc, char *argv[])
         {
             char sysji[] = \"$(sysji).ji\";
             char *sysji_env = getenv(\"JULIA_SYSIMAGE\");
+            char *julia_home = getenv(\"JULIA_HOME\");
             char mainfunc[] = \"main()\";
-            unsetenv(\"JULIA_HOME\");
+            if (julia_home)
+            {
+                julia_home = strdup(julia_home);
+                assert(julia_home);
+                unsetenv(\"JULIA_HOME\");
+            }
             jl_init_with_image(NULL, sysji_env == NULL ? sysji : sysji_env);
+            if (julia_home)
+            {
+                assert(setenv(\"JULIA_HOME\", julia_home, 1) == 0);
+                free(julia_home);
+            }
+
             jl_eval_string(mainfunc);
 
             int ret = 0;
