@@ -227,6 +227,9 @@ function emit_cmain(cfile, exename, relocation)
         #include <stdio.h>
         #include <assert.h>
         #include <string.h>
+        #if defined(_WIN32) || defined(_WIN64)
+        #include <malloc.h>
+        #endif
 
         int main(int argc, char *argv[])
         {
@@ -238,12 +241,23 @@ function emit_cmain(cfile, exename, relocation)
             {
                 julia_home = strdup(julia_home);
                 assert(julia_home);
+                #if defined(_WIN32) || defined(_WIN64)
+                assert(_putenv(\"JULIA_HOME=\") == 0);
+                #else
                 unsetenv(\"JULIA_HOME\");
+                #endif
             }
             jl_init_with_image(NULL, sysji_env == NULL ? sysji : sysji_env);
             if (julia_home)
             {
+                #if defined(_WIN32) || defined(_WIN64)
+                char *julia_home_env = (char*)malloc(12 + strlen(julia_home));
+                sprintf(julia_home_env, \"JULIA_HOME=%s\", julia_home);
+                assert(_putenv(julia_home_env) == 0);
+                free(julia_home_env);
+                #else
                 assert(setenv(\"JULIA_HOME\", julia_home, 1) == 0);
+                #endif
                 free(julia_home);
             }
 
