@@ -261,6 +261,24 @@ function emit_cmain(cfile, exename, relocation)
                 free(julia_home);
             }
 
+            // set Base.ARGS, not Core.ARGS
+            if (jl_base_module != NULL) {
+                jl_array_t *args = (jl_array_t*)jl_get_global(jl_base_module, jl_symbol("ARGS"));
+                if (args == NULL) {
+                    args = jl_alloc_cell_1d(0);
+                    jl_set_const(jl_base_module, jl_symbol("ARGS"), (jl_value_t*)args);
+                }
+                assert(jl_array_len(args) == 0);
+                jl_array_grow_end(args, argc - 1);
+                int i;
+                for (i=1; i < argc; i++) {
+                    jl_value_t *s = (jl_value_t*)jl_cstr_to_string(argv[i]);
+                    jl_set_typeof(s,jl_utf8_string_type);
+                    jl_arrayset(args, s, i - 1);
+                }
+            }
+
+            // call main
             jl_eval_string(mainfunc);
 
             int ret = 0;
