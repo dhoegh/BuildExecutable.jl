@@ -3,6 +3,6 @@ import Base.Test
 function main()
     df = DataFrames.@data([3, 2, 5, 4])
     Base.Test.@test  maximum(df) == 5
-    println(ARGS)
+    println(join(ARGS,","))
     println("It works")
 end
