@@ -233,18 +233,18 @@ function emit_cmain(cfile, exename, relocation)
 
         int main(int argc, char *argv[])
         {
-            char sysji[] = \"$(sysji).ji\";
-            char *sysji_env = getenv(\"JULIA_SYSIMAGE\");
-            char *julia_home = getenv(\"JULIA_HOME\");
-            char mainfunc[] = \"main()\";
+            char sysji[] = "$(sysji).ji";
+            char *sysji_env = getenv("JULIA_SYSIMAGE");
+            char *julia_home = getenv("JULIA_HOME");
+            char mainfunc[] = "main()";
             if (julia_home)
             {
                 julia_home = strdup(julia_home);
                 assert(julia_home);
                 #if defined(_WIN32) || defined(_WIN64)
-                assert(_putenv(\"JULIA_HOME=\") == 0);
+                assert(_putenv("JULIA_HOME=") == 0);
                 #else
-                unsetenv(\"JULIA_HOME\");
+                unsetenv("JULIA_HOME");
                 #endif
             }
             jl_init_with_image(NULL, sysji_env == NULL ? sysji : sysji_env);
@@ -252,11 +252,11 @@ function emit_cmain(cfile, exename, relocation)
             {
                 #if defined(_WIN32) || defined(_WIN64)
                 char *julia_home_env = (char*)malloc(12 + strlen(julia_home));
-                sprintf(julia_home_env, \"JULIA_HOME=%s\", julia_home);
+                sprintf(julia_home_env, "JULIA_HOME=%s", julia_home);
                 assert(_putenv(julia_home_env) == 0);
                 free(julia_home_env);
                 #else
-                assert(setenv(\"JULIA_HOME\", julia_home, 1) == 0);
+                assert(setenv("JULIA_HOME", julia_home, 1) == 0);
                 #endif
                 free(julia_home);
             }
@@ -267,7 +267,7 @@ function emit_cmain(cfile, exename, relocation)
             if (jl_exception_occurred())
             {
                 jl_show(jl_stderr_obj(), jl_exception_occurred());
-                jl_printf(jl_stderr_stream(), \"\\n\");
+                jl_printf(jl_stderr_stream(), "\\n");
                 ret = 1;
             }
 
