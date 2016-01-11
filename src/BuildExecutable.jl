@@ -231,8 +231,7 @@ function emit_cmain(cfile, exename, relocation)
         #include <malloc.h>
         #endif
 
-        void failed_warning(int status, void *arg) {
-            (void)arg;
+        void failed_warning(void) {
             if (jl_base_module == NULL) { // image not loaded!
                 char *julia_home = getenv("JULIA_HOME");
                 if (julia_home) {
@@ -250,7 +249,7 @@ function emit_cmain(cfile, exename, relocation)
             char *sysji_env = getenv("JULIA_SYSIMAGE");
             char mainfunc[] = "main()";
 
-            assert(on_exit(&failed_warning, (void*)0) == 0);
+            assert(atexit(&failed_warning) == 0);
 
             jl_init_with_image(NULL, sysji_env == NULL ? sysji : sysji_env);
 
