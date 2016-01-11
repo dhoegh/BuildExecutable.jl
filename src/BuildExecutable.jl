@@ -231,35 +231,28 @@ function emit_cmain(cfile, exename, relocation)
         #include <malloc.h>
         #endif
 
+        void failed_warning(int status, void *arg) {
+            (void)arg;
+            if (jl_base_module == NULL) { // image not loaded!
+                char *julia_home = getenv("JULIA_HOME");
+                if (julia_home) {
+                    fprintf(stderr,
+                            "\\nJulia init failed, "
+                            "a possible reason is you set an envrionment variable named 'JULIA_HOME', "
+                            "please unset it and retry.\\n");
+                }
+            }
+        }
+
         int main(int argc, char *argv[])
         {
             char sysji[] = "$(sysji).ji";
             char *sysji_env = getenv("JULIA_SYSIMAGE");
-            char *julia_home = getenv("JULIA_HOME");
             char mainfunc[] = "main()";
-            if (julia_home)
-            {
-                julia_home = strdup(julia_home);
-                assert(julia_home);
-                #if defined(_WIN32) || defined(_WIN64)
-                assert(_putenv("JULIA_HOME=") == 0);
-                #else
-                unsetenv("JULIA_HOME");
-                #endif
-            }
+
+            assert(on_exit(&failed_warning, (void*)0) == 0);
+
             jl_init_with_image(NULL, sysji_env == NULL ? sysji : sysji_env);
-            if (julia_home)
-            {
-                #if defined(_WIN32) || defined(_WIN64)
-                char *julia_home_env = (char*)malloc(12 + strlen(julia_home));
-                sprintf(julia_home_env, "JULIA_HOME=%s", julia_home);
-                assert(_putenv(julia_home_env) == 0);
-                free(julia_home_env);
-                #else
-                assert(setenv("JULIA_HOME", julia_home, 1) == 0);
-                #endif
-                free(julia_home);
-            }
 
             // set Base.ARGS, not Core.ARGS
             if (jl_base_module != NULL) {
