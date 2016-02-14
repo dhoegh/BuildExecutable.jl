@@ -170,12 +170,13 @@ function build_executable(exename, script_file, targetdir=nothing, cpu_target="n
             # New implementation
             shlib = exe_file.filename
             @linux_only begin
-                run(`$(patchelf) --set-rpath \$ORIGIN $(joinpath(targetdir, shlib))`)
+                run(`$(patchelf) --set-rpath \$ORIGIN/ $(joinpath(targetdir, shlib))`)
             end
             @osx_only begin
                 # For debug purpose
                 #println(readall(`otool -L $(joinpath(targetdir, shlib))`)[1:end-1])
                 #println("sys.buildfile=",sys.buildfile)
+                run(`$(patchelf) -rpath $(sys.buildpath) @executable_path/ $(joinpath(targetdir, shlib))`)
                 run(`$(patchelf) -change $(sys.buildfile).$(Libdl.dlext) @executable_path/$(basename(sys.buildfile)).$(Libdl.dlext) $(joinpath(targetdir, shlib))`)
                 #println(readall(`otool -L $(joinpath(targetdir, shlib))`)[1:end-1])
             end
