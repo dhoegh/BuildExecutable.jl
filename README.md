@@ -19,4 +19,4 @@ the REPL and running the executable.
 
 If packages with binary dependacies is used the produced executable will not function properly.
 ## Note on portability
-The executable produced by `build_executable` is known to be portable acroos windows computers, but not on Linux. To increase the portablity use an older `cpu_target` target as `"core2"` instead of `"native"`. 
+The executable produced by `build_executable` is known to be portable acroos windows computers, and OSX, but not on Linux. To increase the portablity use an older `cpu_target` target as `"core2"` instead of `"native"`. 
