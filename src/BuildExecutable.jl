@@ -117,8 +117,9 @@ function build_executable(exename, script_file, targetdir=nothing, cpu_target="n
     println()
 
     gcc = find_system_gcc()
+    win_arg = ``
     # This argument is needed for the gcc, see issue #9973
-    win_arg = @windows ? `-D_WIN32_WINNT=0x0502` : ``
+    @windows_only win_arg = Base.WORD_SIZE==32 ? `-D_WIN32_WINNT=0x0502 -march=pentium4` : `-D_WIN32_WINNT=0x0502`
     incs = get_includes()
     ENV2 = deepcopy(ENV)
     @windows_only begin
