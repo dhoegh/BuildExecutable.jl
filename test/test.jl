@@ -1,8 +1,9 @@
-import DataFrames # Even if using was used here full qualification of the functions in Base.Test and DataFrames is needed
-import Base.Test
+import Base.Test # Even if using was used here full qualification of the functions in Base.Test is needed, or if any other module was used.
+import JSON
 function main()
-    df = DataFrames.@data([3, 2, 5, 4])
-    Base.Test.@test  maximum(df) == 5
+    s = "{\"number\" : 5, \"arr\" : [3, 2, 5, 4]}"
+    j = JSON.parse(s)
+    Base.Test.@test  maximum(j["arr"]) == j["number"]
     println(join(ARGS,","))
     println("It works")
 end
