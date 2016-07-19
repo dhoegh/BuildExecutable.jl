@@ -132,7 +132,7 @@ function build_executable(exename, script_file, targetdir=nothing, cpu_target="n
     end
 
     println("running: $gcc -g $win_arg $(join(incs, " ")) $(cfile) -o $(exe_file.buildfile) -Wl,-rpath,$(sys.buildpath) -L$(sys.buildpath) $(exe_file.libjulia) -l$(exename)")
-    cmd = setenv(`$gcc -g $win_arg $(incs) $(cfile) -o $(exe_file.buildfile) -Wl,-rpath,$(sys.buildpath) -L$(sys.buildpath) $(exe_file.libjulia) -l$(exename)`, ENV2)
+    cmd = setenv(`$gcc -g $win_arg $(incs) $(cfile) -o $(exe_file.buildfile) -Wl,-rpath,$(sys.buildpath) -Wl,-rpath,$(sys.buildpath*"/julia") -L$(sys.buildpath) $(exe_file.libjulia) -l$(exename)`, ENV2)
     run(cmd)
     println()
 
@@ -148,9 +148,13 @@ function build_executable(exename, script_file, targetdir=nothing, cpu_target="n
 
         # Copy needed shared libraries to the target directory
         tmp = ".*\.$(Libdl.dlext).*"
-        shlibs = filter(Regex(tmp),readdir(sys.buildpath))
-        for shlib in shlibs
-            cp(joinpath(sys.buildpath, shlib), joinpath(targetdir, shlib), remove_destination=force)
+        paths = [sys.buildpath]
+        VERSION>v"0.5.0-dev+5537" && is_unix() && push!(paths, sys.buildpath*"/julia")
+        for path in paths
+            shlibs = filter(Regex(tmp),readdir(path))
+            for shlib in shlibs
+                cp(joinpath(path, shlib), joinpath(targetdir, shlib), remove_destination=force)
+            end
         end
 
         @unix_only begin

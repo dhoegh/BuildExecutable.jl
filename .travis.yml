@@ -6,7 +6,12 @@ os:
 julia:
   - 0.4
   - nightly
-compiler: gcc-5
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - gcc-5
 notifications:
   email: false
 # uncomment the following lines to override the default test script
@@ -15,6 +20,10 @@ before_install:
       sudo add-apt-repository ppa:staticfloat/julia-deps -y;
       sudo apt-get update -qq -y;
       sudo apt-get install patchelf;
+      mkdir -p $HOME/bin;
+      ln -s /usr/bin/gcc-5 $HOME/bin/gcc;
+      ln -s /usr/bin/gcc-5 $HOME/bin/x86_64-linux-gnu-gcc;
+      gcc --version;
     fi
 script:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
