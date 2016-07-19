@@ -6,6 +6,7 @@ os:
 julia:
   - 0.4
   - nightly
+compiler: gcc-5
 notifications:
   email: false
 # uncomment the following lines to override the default test script
