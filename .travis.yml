@@ -19,7 +19,6 @@ before_install:
   - if [ `uname` = "Linux" ]; then
       sudo add-apt-repository ppa:staticfloat/julia-deps -y;
       sudo apt-get update -qq -y;
-      # sudo apt-get install patchelf;
       mkdir -p $HOME/bin;
       ln -s /usr/bin/gcc-5 $HOME/bin/gcc;
       ln -s /usr/bin/gcc-5 $HOME/bin/x86_64-linux-gnu-gcc;
