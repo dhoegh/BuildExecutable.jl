@@ -1,10 +1,11 @@
+using BinDeps
+
 @windows_only begin
     using WinRPM
     WinRPM.install("gcc",yes=true)
 end
 
 @linux_only begin
-    using BinDeps
     @BinDeps.setup
     patchelf = library_dependency("patchelf")
     
