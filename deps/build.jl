@@ -6,10 +6,9 @@ end
 @linux_only begin
     using BinDeps
     @BinDeps.setup
-        patchelf = library_dependency("patchelf")
-        
-        version= "0.9"
-        provides(Sources, URI("https://nixos.org/releases/patchelf/patchelf-0.9/patchelf-$version.tar.gz"), [patchelf], unpacked_dir="patchelf")
-        @BinDeps.install Dict(:patchelf_dep => :patchelf)
-    end
+    patchelf = library_dependency("patchelf")
+    
+    version= "0.9"
+    provides(Sources, URI("https://nixos.org/releases/patchelf/patchelf-0.9/patchelf-$version.tar.gz"), [patchelf], unpacked_dir="patchelf")
+    @BinDeps.install Dict(:patchelf_dep => :patchelf)
 end
