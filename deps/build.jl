@@ -4,6 +4,7 @@
 end
 
 @linux_only begin
+    using BinDeps
     @BinDeps.setup
         patchelf = library_dependency("patchelf")
         
