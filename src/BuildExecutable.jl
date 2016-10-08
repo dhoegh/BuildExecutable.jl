@@ -193,7 +193,9 @@ function build_executable(exename, script_file, targetdir=nothing, cpu_target="n
 end
 
 function find_patchelf()
-    @linux_only for patchelf in [joinpath(JULIA_HOME, "patchelf"), "patchelf"]
+    installed_version = joinpath(dirname(dirname(@__FILE__)), "deps", "usr", "local", "bin", "patchelf")
+
+    @linux_only for patchelf in [joinpath(JULIA_HOME, "patchelf"), "patchelf", installed_version]
         try
             if success(`$(patchelf) --version`)
                 return patchelf
@@ -226,7 +228,7 @@ function emit_cmain(cfile, exename, relocation)
         sysji = joinpath(dirname(Libdl.dlpath("libjulia")), "lib"*exename)
     end
     sysji = escape_string(sysji)
-    if VERSION > v"0.5.0-dev+4397" 
+    if VERSION > v"0.5.0-dev+4397"
         arr = "jl_alloc_vec_any"
         str = "jl_string_type"
     else
