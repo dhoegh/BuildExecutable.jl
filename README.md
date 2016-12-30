@@ -18,7 +18,7 @@ required. It's suggested to replace using statements with import
 statements to produce a consistent result between running main() in
 the REPL and running the executable. 
 
-If packages with binary dependacies is used the produced executable will not function properly.
+If packages with binary dependencies is used the produced executable will not function properly.
 
 ## Note on portability
 The executable produced by `build_executable` is known to be portable across Windows computers, and OS X, but not on Linux. To increase the portablity use an older `cpu_target` target as `"core2"` instead of `"native"`. 
