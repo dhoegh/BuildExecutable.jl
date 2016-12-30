@@ -6,7 +6,7 @@ Builds an executable that doesn't require any julia source code.
 The user needs to provide a julia script that contains a function main(),
 taking no argument, which will be run when executing the
 produced executable. An executable can be produced by using the `build_executable` function
-```
+```julia
 using BuildExecutable
 build_executable(exename, script, targetdir, "native")
 ```
