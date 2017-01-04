@@ -111,11 +111,6 @@ function build_executable(exename, script_file, targetdir=nothing, cpu_target="n
     emit_cmain(cfile, exename, targetdir != nothing)
     emit_userimgjl(userimgjl, script_file)
 
-    empty_cmd_str = ``
-    println("running: $(julia) $(build_sysimg) $(sys.buildfile) $(cpu_target) $(userimgjl) --force" * (debug ? " --debug" : ""))
-    run(`$(julia) $(build_sysimg) $(sys.buildfile) $(cpu_target) $(userimgjl) --force $(debug ? "--debug" : empty_cmd_str)`)
-    println()
-
     gcc = find_system_gcc()
     win_arg = ``
     # This argument is needed for the gcc, see issue #9973
@@ -130,6 +125,12 @@ function build_executable(exename, script_file, targetdir=nothing, cpu_target="n
             push!(incs, "-I"*abspath(joinpath(dirname(gcc),"..","include")))
         end
     end
+	
+    empty_cmd_str = ``
+    println("running: $(julia) $(build_sysimg) $(sys.buildfile) $(cpu_target) $(userimgjl) --force" * (debug ? " --debug" : ""))
+    cmd = setenv(`$(julia) $(build_sysimg) $(sys.buildfile) $(cpu_target) $(userimgjl) --force $(debug ? "--debug" : empty_cmd_str)`, ENV2)
+    run(cmd)
+    println()
 
     println("running: $gcc -g $win_arg $(join(incs, " ")) $(cfile) -o $(exe_file.buildfile) -Wl,-rpath,$(sys.buildpath) -L$(sys.buildpath) $(exe_file.libjulia) -l$(exename)")
     cmd = setenv(`$gcc -g $win_arg $(incs) $(cfile) -o $(exe_file.buildfile) -Wl,-rpath,$(sys.buildpath) -Wl,-rpath,$(sys.buildpath*"/julia") -L$(sys.buildpath) $(exe_file.libjulia) -l$(exename)`, ENV2)
