@@ -261,7 +261,7 @@ function emit_cmain(cfile, exename, relocation)
 
         int main(int argc, char *argv[])
         {
-            char sysji[] = "$(sysji).ji";
+            char sysji[] = "$(sysji).$(Libdl.dlext)";
             char *sysji_env = getenv("JULIA_SYSIMAGE");
             char mainfunc[] = "main()";
 
