@@ -200,8 +200,9 @@ function build_executable(exename, script_file, targetdir=nothing, cpu_target="n
 end
 
 function find_patchelf()
+    installed_version = joinpath(dirname(dirname(@__FILE__)), "deps", "usr", "local", "bin", "patchelf")
     @static if is_linux()
-        for patchelf in [joinpath(JULIA_HOME, "patchelf"), "patchelf"]
+        for patchelf in [joinpath(JULIA_HOME, "patchelf"), "patchelf", installed_version]
             try
                 if success(`$(patchelf) --version`)
                     return patchelf
