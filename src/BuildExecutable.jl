@@ -1,6 +1,7 @@
 module BuildExecutable
 export build_executable
-@windows_only using WinRPM
+using Compat
+@static if is_windows() using WinRPM end
 # Builds an executable that doesn't require any julia source code.
 # The user needs to provide a julia script that contains a function main(),
 # taking no argument, which will be run when executing the
@@ -26,7 +27,9 @@ function Executable(exename, targetdir, debug)
         exename = exename * "-debug"
     end
     filename = exename
-    @windows_only filename = filename * ".exe"
+    @static if is_windows()
+        filename = filename * ".exe"
+    end
     buildfile = abspath(joinpath(JULIA_HOME, filename))
     targetfile = targetdir == nothing ? buildfile : joinpath(targetdir, filename)
     libjulia = debug ? "-ljulia-debug" : "-ljulia"
@@ -52,7 +55,7 @@ end
 function build_executable(exename, script_file, targetdir=nothing, cpu_target="native";
                           force=false, debug=false)
     julia = abspath(joinpath(JULIA_HOME, debug ? "julia-debug" : "julia"))
-    if !isfile(julia * @windows? ".exe" : "")
+    if !isfile(julia * (is_windows() ? ".exe" : ""))
         println("ERROR: file '$(julia)' not found.")
         return 1
     end
@@ -67,7 +70,7 @@ function build_executable(exename, script_file, targetdir=nothing, cpu_target="n
 
     if targetdir != nothing
         patchelf = find_patchelf()
-        if patchelf == nothing && !(OS_NAME == :Windows)
+        if patchelf == nothing && !(is_windows())
             println("ERROR: Using the 'targetdir' option requires the 'patchelf' utility. Please install it.")
             return 1
         end
@@ -114,10 +117,12 @@ function build_executable(exename, script_file, targetdir=nothing, cpu_target="n
     gcc = find_system_gcc()
     win_arg = ``
     # This argument is needed for the gcc, see issue #9973
-    @windows_only win_arg = Base.WORD_SIZE==32 ? `-D_WIN32_WINNT=0x0502 -march=pentium4` : `-D_WIN32_WINNT=0x0502`
+    @static if is_windows()
+	    win_arg = Sys.WORD_SIZE==32 ? `-D_WIN32_WINNT=0x0502 -march=pentium4` : `-D_WIN32_WINNT=0x0502`
+    end
     incs = get_includes()
     ENV2 = deepcopy(ENV)
-    @windows_only begin
+    @static if is_windows()
         if contains(gcc, "WinRPM")
             # This should not bee necessary, it is done due to WinRPM's gcc's
             # include paths is not correct see WinRPM.jl issue #38
@@ -125,12 +130,13 @@ function build_executable(exename, script_file, targetdir=nothing, cpu_target="n
             push!(incs, "-I"*abspath(joinpath(dirname(gcc),"..","include")))
         end
     end
-	
+
     empty_cmd_str = ``
     println("running: $(julia) $(build_sysimg) $(sys.buildfile) $(cpu_target) $(userimgjl) --force" * (debug ? " --debug" : ""))
     cmd = setenv(`$(julia) $(build_sysimg) $(sys.buildfile) $(cpu_target) $(userimgjl) --force $(debug ? "--debug" : empty_cmd_str)`, ENV2)
     run(cmd)
     println()
+
 
     println("running: $gcc -g $win_arg $(join(incs, " ")) $(cfile) -o $(exe_file.buildfile) -Wl,-rpath,$(sys.buildpath) -L$(sys.buildpath) $(exe_file.libjulia) -l$(exename)")
     cmd = setenv(`$gcc -g $win_arg $(incs) $(cfile) -o $(exe_file.buildfile) -Wl,-rpath,$(sys.buildpath) -Wl,-rpath,$(sys.buildpath*"/julia") -L$(sys.buildpath) $(exe_file.libjulia) -l$(exename)`, ENV2)
@@ -158,7 +164,7 @@ function build_executable(exename, script_file, targetdir=nothing, cpu_target="n
             end
         end
 
-        @unix_only begin
+        @static if is_unix()
             # Fix rpath in executable and shared libraries
             # old implementation for fixing rpath in shared libraries
             #=
@@ -175,10 +181,10 @@ function build_executable(exename, script_file, targetdir=nothing, cpu_target="n
             =#
             # New implementation
             shlib = exe_file.filename
-            @linux_only begin
+            @static if is_linux()
                 run(`$(patchelf) --set-rpath \$ORIGIN/ $(joinpath(targetdir, shlib))`)
             end
-            @osx_only begin
+            @static if is_apple()
                 # For debug purpose
                 #println(readall(`otool -L $(joinpath(targetdir, shlib))`)[1:end-1])
                 #println("sys.buildfile=",sys.buildfile)
@@ -195,15 +201,16 @@ end
 
 function find_patchelf()
     installed_version = joinpath(dirname(dirname(@__FILE__)), "deps", "usr", "local", "bin", "patchelf")
-
-    @linux_only for patchelf in [joinpath(JULIA_HOME, "patchelf"), "patchelf", installed_version]
-        try
-            if success(`$(patchelf) --version`)
-                return patchelf
+    @static if is_linux()
+        for patchelf in [joinpath(JULIA_HOME, "patchelf"), "patchelf", installed_version]
+            try
+                if success(`$(patchelf) --version`)
+                    return patchelf
+                end
             end
         end
     end
-    @osx_only "install_name_tool"
+    @static if is_apple() "install_name_tool" end
 end
 
 function get_includes()
@@ -236,6 +243,7 @@ function emit_cmain(cfile, exename, relocation)
         arr = "jl_alloc_cell_1d"
         str = "jl_utf8_string_type"
     end
+    ext = (VERSION < v"0.5" &&  is_windows()) ? "ji" : Libdl.dlext
     f = open(cfile, "w")
     write( f, """
         #include <julia.h>
@@ -261,7 +269,7 @@ function emit_cmain(cfile, exename, relocation)
 
         int main(int argc, char *argv[])
         {
-            char sysji[] = "$(sysji).$(Libdl.dlext)";
+            char sysji[] = "$(sysji).$ext";
             char *sysji_env = getenv("JULIA_SYSIMAGE");
             char mainfunc[] = "main()";
 
@@ -313,22 +321,26 @@ end
 
 function find_system_gcc()
     # On Windows, check to see if WinRPM is installed, and if so, see if gcc is installed
-    @windows_only try
-        winrpmgcc = joinpath(WinRPM.installdir,"usr","$(Sys.ARCH)-w64-mingw32",
-            "sys-root","mingw","bin","gcc.exe")
-        if success(`$winrpmgcc --version`)
-            return winrpmgcc
+    @static if is_windows()
+        try
+            winrpmgcc = joinpath(WinRPM.installdir,"usr","$(Sys.ARCH)-w64-mingw32",
+                "sys-root","mingw","bin","gcc.exe")
+            if success(`$winrpmgcc --version`)
+                return winrpmgcc
+            end
         end
     end
 
     # See if `gcc` exists
-    @unix_only try
-        if success(`gcc -v`)
-            return "gcc"
+    @static if is_unix()
+        try
+            if success(`gcc -v`)
+                return "gcc"
+            end
         end
     end
 
-    error( "GCC not found on system: " * @windows? "GCC can be installed via `Pkg.add(\"WinRPM\"); WinRPM.install(\"gcc\")`" : "" )
+    error( "GCC not found on system: " * (is_windows() ? "GCC can be installed via `Pkg.add(\"WinRPM\"); WinRPM.install(\"gcc\")`" : "" ))
 end
 
 end # module
