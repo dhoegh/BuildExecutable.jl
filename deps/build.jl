@@ -1,7 +1,8 @@
 using Compat
 @static if is_windows()
     using WinRPM
-    WinRPM.install("gcc",yes=true)
+    WinRPM.install("gcc", yes=true)
+    WinRPM.install("winpthreads-devel", yes=true)
 end
 
 @static if is_linux()
