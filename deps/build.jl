@@ -1,9 +1,10 @@
-@windows_only begin
+using Compat
+@static if is_windows()
     using WinRPM
     WinRPM.install("gcc",yes=true)
 end
 
-@linux_only begin
+@static if is_linux()
     DEPS_PATH = dirname(@__FILE__)
     DOWNLOADS_PATH = joinpath(DEPS_PATH, "downloads")
     INSTALL_PATH = joinpath(DEPS_PATH, "usr", "local")
