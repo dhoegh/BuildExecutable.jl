@@ -1,7 +1,7 @@
 module BuildExecutable
 export build_executable
-@static if is_windows() using WinRPM end
 using Compat
+@static if is_windows() using WinRPM end
 # Builds an executable that doesn't require any julia source code.
 # The user needs to provide a julia script that contains a function main(),
 # taking no argument, which will be run when executing the
