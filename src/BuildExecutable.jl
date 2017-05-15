@@ -300,7 +300,8 @@ function emit_cmain(cfile, exename, relocation)
             int ret = 0;
             if (jl_exception_occurred())
             {
-                jl_show(jl_stderr_obj(), jl_exception_occurred());
+                // jl_show(jl_stderr_obj(), jl_exception_occurred());
+                jl_call2(jl_get_function(jl_base_module, "show"), jl_stderr_obj(), jl_exception_occurred());
                 jl_printf(jl_stderr_stream(), "\\n");
                 ret = 1;
             }
